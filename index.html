@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Autoevaluación - Enfermería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .option-btn {
+            transition: all 0.2s ease;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .option-btn:hover {
+            background: rgba(51, 65, 85, 0.8);
+            transform: translateX(5px);
+        }
+        .correct {
+            background-color: #059669 !important;
+            color: white !important;
+            border-color: #10b981 !important;
+        }
+        .incorrect {
+            background-color: #dc2626 !important;
+            color: white !important;
+            border-color: #ef4444 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <div class="max-w-3xl w-full">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-blue-400 mb-2">Test de Enfermería</h1>
+            <p class="text-slate-400 italic text-sm">Prueba de conocimientos: Precauciones, Shock y Patologías</p>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-3 gap-4 mb-6 sticky top-4 z-10">
+            <div class="glass-card p-4 rounded-xl text-center shadow-lg">
+                <span class="block text-xs uppercase text-slate-400">Pregunta</span>
+                <span id="q-counter" class="text-xl font-bold">1/45</span>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center border-l-4 border-green-500 shadow-lg">
+                <span class="block text-xs uppercase text-slate-400">Aciertos</span>
+                <span id="correct-counter" class="text-xl font-bold text-green-400">0</span>
+            </div>
+            <div class="glass-card p-4 rounded-xl text-center border-l-4 border-red-500 shadow-lg">
+                <span class="block text-xs uppercase text-slate-400">Errores</span>
+                <span id="incorrect-counter" class="text-xl font-bold text-red-400">0</span>
+            </div>
+        </div>
+
+        <!-- Question Container -->
+        <div id="game-container" class="glass-card p-6 md:p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+            <div id="question-text" class="text-xl font-medium mb-8 leading-relaxed">
+                Cargando preguntas...
+            </div>
+            <div id="options-container" class="space-y-3">
+                <!-- Options will be injected here -->
+            </div>
+            
+            <button id="next-btn" class="hidden mt-8 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg">
+                Siguiente Pregunta
+            </button>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden glass-card p-8 rounded-2xl shadow-2xl text-center">
+            <h2 class="text-3xl font-bold mb-4">¡Test Finalizado!</h2>
+            <div class="text-6xl font-bold text-blue-400 mb-6" id="final-score">0%</div>
+            <p id="final-stats" class="text-lg text-slate-300 mb-8"></p>
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg">
+                Reiniciar Test
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                q: "1. El principio fundamental de las Precauciones Universales para evitar la transmisión de los microorganismos es:",
+                options: [
+                    "No comer, beber ni fumar en zonas de trabajo",
+                    "Todos los pacientes y sus fluidos corporales independientemente del diagnóstico de ingreso o motivo por el cual haya entrado al hospital o clínica, deberán ser considerados como potencialmente infectantes",
+                    "Utilizar siempre el Equipo de Protección Individual (EPI).",
+                    "Seguir obligatoriamente las normas de higiene personal. Lavado y secado de manos, protección de cortes y heridas, proteger con guantes las lesiones cutáneas que no se puedan cubrir, retirar anillos y joyas...."
+                ],
+                correct: 1
+            },
+            {
+                q: "2. Señale la respuesta correcta sobre los fármacos:",
+                options: [
+                    "Los fármacos bactericidas destruyen los microorganismos",
+                    "Los fármacos bactericidas frenan el crecimiento y reproducción de microorganismos cuando alcanzan un nivel elevado en plasma",
+                    "Los fármacos bacteriostáticos frenan y destruyen el crecimiento de microorganismos",
+                    "Todas las afirmaciones son correctas"
+                ],
+                correct: 0
+            },
+            {
+                q: "3. Los tipos de shock son:",
+                options: [
+                    "Hipovolémico, Distributivo y Cardiogénico",
+                    "Cardiogénico, Séptico e Hipovolémico",
+                    "Neurógeno, Distributivo y Psicógeno",
+                    "Hipovolémico, Distributivo, Séptico y Cardiogénico"
+                ],
+                correct: 3
+            },
+            {
+                q: "4. De los siguientes enunciados ¿cuál se aproxima más a la definición de shock?",
+                options: [
+                    "Carencia generalizada de perfusión de los tejidos por hematíes oxigenados que da lugar a un metabolismo aerobio y a una disminución de la producción de energía.",
+                    "Descenso de la tensión arterial, un pulso rápido, una piel fría o húmeda.",
+                    "Estado generado por la pérdida masiva de sangre",
+                    "Carencia generalizada de perfusión de los tejidos por hematíes oxigenados que da lugar a un metabolismo anaerobio y a una disminución de la producción de energía."
+                ],
+                correct: 3
+            },
+            {
+                q: "5. Atendemos a un paciente que acaba de sufrir un accidente de tráfico. Se encuentra consciente y al tomarle las constantes tiene una presión arterial sistólica de 70 mmHg y una frecuencia cardíaca de 45 latidos/minutos. Además, la piel de las extremidades está caliente. ¿Cuál es la causa más probable de shock?",
+                options: [
+                    "Shock hipovolémico",
+                    "Shock cardiogénico",
+                    "Shock neurogénico",
+                    "Shock séptico"
+                ],
+                correct: 2
+            },
+            {
+                q: "6. Qué tipo de shock puede producir la alergia al látex",
+                options: [
+                    "Distributivo",
+                    "Hipovolémico",
+                    "Cardiogénico",
+                    "Séptico"
+                ],
+                correct: 0
+            },
+            {
+                q: "7. La gangrena de Fournier está causada por bacterias...señale la incorrecta:",
+                options: [
+                    "Cocos Gram (-)",
+                    "Aerobias Gram (-)",
+                    "Anaerobias",
+                    "Cocos Gram (+)"
+                ],
+                correct: 0
+            },
+            {
+                q: "8. Con respecto al Shock, señale la respuesta incorrecta:",
+                options: [
+                    "En el shock anafiláctico se produce un aumento de la permeabilidad celular, produciendo edema",
+                    "En el shock neurógeno hay una pérdida del tono simpático, lo que produce vasoconstricción periférica e hipotensión grave",
+                    "El shock hipovolémico ocurre por una gran disminución de del volumen de líquido circulante que ocasiona que las necesidades metabólicas del organismo no se pueden satisfacer",
+                    "El shock cardiogénico se produce cuando el corazón no puede producir un gasto cardíaco adecuado para mantener los requerimientos metabólicos de los tejidos corporales"
+                ],
+                correct: 1
+            },
+            {
+                q: "9. Se denomina diátesis hemorrágica a:",
+                options: [
+                    "La hemorragia producida por fármacos",
+                    "Presentar hemorragias ante estímulos leves",
+                    "Sangrado de masa tumoral",
+                    "Hemorragia rectal de sangre roja"
+                ],
+                correct: 1
+            },
+            {
+                q: "10. Qué volumen de anestésico, y su equivalente en mg, de mepivacaína al 2% se le puede administrar como máximo a una persona de 60 kg de peso...",
+                options: [
+                    "18 ml/360 mg",
+                    "27 ml/420 mg",
+                    "21 ml/420 mg",
+                    "15 ml/300 mg"
+                ],
+                correct: 2 // 7mg/kg * 60kg = 420mg. 420/20mg/ml = 21ml
+            },
+            {
+                q: "11. Qué contribuye al crecimiento de un absceso... señale la incorrecta:",
+                options: [
+                    "la tensión dentro de la cavidad",
+                    "la corrosión de los tejidos periféricos",
+                    "la nutrición tisular",
+                    "el estasis venoso"
+                ],
+                correct: 2
+            },
+            {
+                q: "12. señale la afirmación correcta sobre el shock anafiláctico",
+                options: [
+                    "Se produce por disminución de volumen intravascular",
+                    "Junto al shock cardiogénico forman el shock distributivo",
+                    "Se produce por la ingestión o inyección de un antígeno sensible",
+                    "Todas las respuestas son incorrectas"
+                ],
+                correct: 2
+            },
+            {
+                q: "13. La lista de verificación de la cirugía debe estar cumplimentada y firmada por...",
+                options: [
+                    "Enfermera instrumentista",
+                    "Cirujano y anestesista",
+                    "Enfermera circulante",
+                    "Cirujano, anestesista y enfermero"
+                ],
+                correct: 3
+            },
+            {
+                q: "14. Cuál de las siguientes frutas no contiene la proteína de látex:",
+                options: [
+                    "Plátano",
+                    "Aguacates",
+                    "Sandía",
+                    "Castañas"
+                ],
+                correct: 2
+            },
+            {
+                q: "15. Cual de estas patologías no es susceptible de Hemorragia Digestiva Alta:",
+                options: [
+                    "Varices esofágicas",
+                    "Angiodisplasia cólica",
+                    "Angiodisplasia gástrica",
+                    "Fístula aortoentérica"
+                ],
+                correct: 1
+            },
+            {
+                q: "16. ¿Cuál de los siguientes enunciados define de manera más precisa la definición de shock?",
+                options: [
+                    "Hipotensión arterial",
+                    "Piel fría",
+                    "Oligoanuria",
+                    "Hipoperfusión hística"
+                ],
+                correct: 3
+            },
+            {
+                q: "17. La hematoquecia es una manifestación más habitual de:",
+                options: [
+                    "Hemorragia digestiva alta por ulcus péptico",
+                    "Hemorragia digestiva baja por varices esofágicas",
+                    "Hemorragia digestiva baja",
+                    "Hemorragia digestiva alta por lesiones agudas de la mucosa gástrica"
+                ],
+                correct: 2
+            },
+            {
+                q: "18. Las precauciones universales son unas medidas que deben ser observadas:",
+                options: [
+                    "Sólo ante sangre de una persona con SIDA",
+                    "Ante un contacto con sangre o ciertos fluidos de cualquier persona",
+                    "Sólo ante personas de las que no conocemos su historia clínica",
+                    "Únicamente en caso de accidente profesional"
+                ],
+                correct: 1
+            },
+            {
+                q: "19. Está contraindicada la sutura por primera intención en heridas… Señale la incorrecta.",
+                options: [
+                    "Con más de 6 horas de evolución, sucias y con pérdidas de sustancia",
+                    "Penetrantes en tórax y abdomen",
+                    "Con riesgo de afectar tendones o nervios",
+                    "Todas son correctas"
+                ],
+                correct: 3
+            },
+            {
+                q: "20. Signos y síntomas a tener en cuenta en una herida de 24 horas después de realizarle una sutura:",
+                options: [
+                    "Dolor y edema",
+                    "Rubor y calor",
+                    "Drenaje",
+                    "Las respuestas a y b son correctas"
+                ],
+                correct: 3
+            },
+            {
+                q: "21. Al valorar la parálisis del miembro superior en un paciente con luxación, existirá afectación del nervio cubital si…",
+                options: [
+                    "No puede mover el dedo pulgar",
+                    "No puede unir 1º y 5º dedo",
+                    "No flexiona los dedos",
+                    "No extiende los dedos"
+                ],
+                correct: 1
+            },
+            {
+                q: "22. Si una herida está infectada, la actuación para con ella será… Señale la incorrecta",
+                options: [
+                    "Limpieza, desinfección y sutura",
+                    "Limpieza, desinfección y cierre por 2º intención",
+                    "Limpieza, desinfección y cierre por 3º intención",
+                    "Las respuesta b y c son correctas"
+                ],
+                correct: 0
+            },
+            {
+                q: "23. El dolor que se exacerba con la actividad puede ser debido a:",
+                options: [
+                    "Infección ósea",
+                    "Artritis",
+                    "Luxación de la articulación",
+                    "Distensión de la articulación"
+                ],
+                correct: 3
+            },
+            {
+                q: "24. La inflamación de la articulación… señale la respuesta correcta",
+                options: [
+                    "Forma tejido queloide",
+                    "No origina anquilosis",
+                    "Provoca deformidad",
+                    "Todas las respuestas son correctas"
+                ],
+                correct: 2
+            },
+            {
+                q: "25. Qué volumen de anestésico y su equivalente en mg, de mepivacaína al 2% se le puede administrar como máximo a una persona de 40 kg...",
+                options: [
+                    "18 ml/360 mg",
+                    "27ml/420mg",
+                    "21 ml/420mg",
+                    "14 ml/280 mg"
+                ],
+                correct: 3 // 7mg/kg * 40 = 280mg. 280/20 = 14ml
+            },
+            {
+                q: "26. En el tratamiento del esguince, la aplicación de calor debe hacerse…",
+                options: [
+                    "Alternando con compresas frías",
+                    "Primero se aplica calor y posteriormente frío",
+                    "Pasadas 36 horas del traumatismo",
+                    "Las primeras 12 horas frío y posteriormente calor"
+                ],
+                correct: 2
+            },
+            {
+                q: "27. Al valorar la parálisis del miembro inferior en un paciente con luxación, existirá afectación del nervio peroneo si…",
+                options: [
+                    "No existe flexión palmar de los dedos",
+                    "No existe flexión dorsal de los dedos",
+                    "No existe flexión dorsal del pie",
+                    "Todas la respuestas son correctas"
+                ],
+                correct: 2
+            },
+            {
+                q: "28. En la fase de consolidación de las fracturas… señale la incorrecta",
+                options: [
+                    "La infección retrasa la consolidación",
+                    "La proliferación celular origina red de fibrina que da tejido fibroso",
+                    "La osificación comienza con el acúmulo de los osteoblastos",
+                    "La formación del callo de fractura hace que los osteoblastos se acumulen formando una zona fibrosa"
+                ],
+                correct: 3
+            },
+            {
+                q: "29. Criterio de laparotomía inmediata en herida abdominal por arma blanca… señale la incorrecta",
+                options: [
+                    "Neumoperitoneo",
+                    "TA diastólica menor de 90 mmHg tras la administración de 3 litros de suero fisiológico IV",
+                    "No ruidos intestinales con defensa a la palpación",
+                    "Hematoquecia"
+                ],
+                correct: 1
+            },
+            {
+                q: "30. Señale la respuesta correcta respecto al shock:",
+                options: [
+                    "En el shock hipovolémico la presión venosa central y la presión de enclavamiento pulmonar están elevadas.",
+                    "El shock secundario a insuficiencia suprarrenal no precisa de volumen ni altas.",
+                    "El shock se define por hipotensión, gasto cardíaco bajo y resistencias vasculares altas.",
+                    "El shock cardiogénico es un fallo primario de bomba que produce disminución del aporte de oxígeno a los tejidos y elevación de las presiones vasculares pulmonares."
+                ],
+                correct: 3
+            },
+            {
+                q: "31. El edema está provocado por:",
+                options: [
+                    "Aumento del componente extravascular por aumento de líquido intracelular.",
+                    "Disminución del componente extravascular por aumento de líquido extracelular,",
+                    "Aumento del componente intersticial por aumento del líquido extracelular.",
+                    "Aumento del componente intersticial por disminución del líquido intracelular."
+                ],
+                correct: 2
+            },
+            {
+                q: "32. ¿Cuál sería la primera actuación de enfermería ante una hematemesis masiva-activa?",
+                options: [
+                    "Tomar constantes vitales",
+                    "Administración de oxígeno",
+                    "Canalización de una vía venosa",
+                    "Taponamiento de la herida"
+                ],
+                correct: 0
+            },
+            {
+                q: "33. Señale el factor que influye en la persona candidata a sufrir una infección:",
+                options: [
+                    "La edad",
+                    "Estado nutricional",
+                    "Algunos tratamientos agresivos",
+                    "Todas las respuestas son correctas."
+                ],
+                correct: 3
+            },
+            {
+                q: "34. Un paciente acude a urgencias con hematemesis franca... pálido, sudoroso, FC 110, TA 98... ¿Qué NO realizaría?",
+                options: [
+                    "Asegurar una adecuada oxigenación del paciente.",
+                    "Canalizar dos vías periféricas de grueso calibre",
+                    "Colocar una sonda nasogástrica.",
+                    "Utilizar el hematocrito como índice de pérdida hemática."
+                ],
+                correct: 3 // En fase aguda el hematocrito no refleja fielmente la pérdida real
+            },
+            {
+                q: "35. Los cuidados de enfermería a pacientes con infección van destinados a:",
+                options: [
+                    "Destruir el crecimiento de microorganismos",
+                    "Frenar el crecimiento de microorganismos",
+                    "Mejorar su bienestar psíquico",
+                    "a y b son correctas"
+                ],
+                correct: 3
+            },
+            {
+                q: "36. Cual de los siguientes es un signo tardío de shock?",
+                options: [
+                    "hipotensión",
+                    "taquipnea",
+                    "oliguria",
+                    "taquicardia"
+                ],
+                correct: 0
+            },
+            {
+                q: "37. Las preocupaciones universales son unas medidas que deben ser observadas:",
+                options: [
+                    "Solo ante sangre de una persona con SIDA",
+                    "Debe aplicarse ante cualquier paciente hospitalizado",
+                    "Solo ante personas de las que no conocemos su historia clínica.",
+                    "Únicamente en caso de accidente profesional."
+                ],
+                correct: 1
+            },
+            {
+                q: "38. Durante el curso evolutivo del shock pueden aparecer todos los siguientes signos excepto:",
+                options: [
+                    "Alcalosis metabólica",
+                    "Acidosis respiratoria",
+                    "Oligoanuria",
+                    "Hipotensión arterial"
+                ],
+                correct: 0
+            },
+            {
+                q: "39. El shock cardiogénico:",
+                options: [
+                    "Todas las respuestas son correctas",
+                    "Cuándo se debe a infarto del ventrículo izquierdo sugiere que al menos está afectado el 40% del ventrículo",
+                    "Salvo que se descubra una lesión susceptible de corrección quirúrgica, la mortalidad asociada sobrepasa el 75%",
+                    "Siempre se debe a disfunción miocárdica"
+                ],
+                correct: 0
+            },
+            {
+                q: "40. Con respecto a la etiología del shock séptico cuál de las siguientes afirmaciones es falsa:",
+                options: [
+                    "El origen más frecuente suele ser el comunitario",
+                    "Los hongos pueden producir shock séptico",
+                    "Los focos más habituales son el pulmonar y el abdominal",
+                    "Las bacterias gram negativas solas o acompañadas no son los agentes causales más frecuentes"
+                ],
+                correct: 3
+            },
+            {
+                q: "41. Paciente tras accidente de tráfico... TA sistólica 70, FC 45, extremidades calientes. Causa probable:",
+                options: [
+                    "Hipovolémico",
+                    "Cardiogénico",
+                    "Neurogénico",
+                    "Séptico"
+                ],
+                correct: 2
+            },
+            {
+                q: "42. Cuál de las siguientes situaciones no explicaría por sí misma una situación de shock:",
+                options: [
+                    "Traumatismo torácico",
+                    "Taponamiento cardíaco",
+                    "Traumatismo abdominal",
+                    "Traumatismo craneoencefálico con alteración del nivel de conciencia"
+                ],
+                correct: 3
+            },
+            {
+                q: "43. ¿Cuál sería su conducta ante un shock en la recepción de un traumatismo en el tórax?",
+                options: [
+                    "Realizar un ECG para descartar una contusión cardiaca.",
+                    "Infundir dos litros de suero fisiológico 0,9%",
+                    "Indicar canalización de vía venosa central.",
+                    "Dar analgésico, dado que la hipotensión arterial puede ser por dolor."
+                ],
+                correct: 1
+            },
+            {
+                q: "44. Con respecto al tratamiento de la HDA, ¿qué no estaría recomendado?",
+                options: [
+                    "Canalización de vía central de implantación periférica",
+                    "Transfusión de hemoderivados",
+                    "Intubación orotraqueal",
+                    "Colocación de sonda nasogástrica"
+                ],
+                correct: 0
+            },
+            {
+                q: "45. En el tratamiento de las varices esofágicas señale la incorrecta:",
+                options: [
+                    "Debemos aumentar la perfusión de líquidos debido a la pérdida sanguínea",
+                    "Se administra plasma fresco para corregir la coagulopatía",
+                    "Debemos limitar los líquidos para prevenir la ascitis",
+                    "Se realizan transfusiones de plaquetas"
+                ],
+                correct: 2
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let errors = 0;
+        let answered = false;
+
+        const qCounter = document.getElementById('q-counter');
+        const correctCounter = document.getElementById('correct-counter');
+        const incorrectCounter = document.getElementById('incorrect-counter');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const gameContainer = document.getElementById('game-container');
+        const resultScreen = document.getElementById('result-screen');
+
+        function loadQuestion() {
+            answered = false;
+            nextBtn.classList.add('hidden');
+            const q = questions[currentQuestion];
+            
+            qCounter.innerText = `${currentQuestion + 1}/${questions.length}`;
+            questionText.innerText = q.q;
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn w-full p-4 rounded-xl glass-card text-left text-slate-200';
+                button.innerHTML = `<span class="inline-block w-6 h-6 mr-2 border border-slate-500 rounded-full text-center text-xs leading-5">${String.fromCharCode(97 + index)}</span> ${opt}`;
+                button.onclick = () => selectOption(index, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectOption(index, element) {
+            if (answered) return;
+            answered = true;
+            const q = questions[currentQuestion];
+            const buttons = optionsContainer.getElementsByTagName('button');
+
+            if (index === q.correct) {
+                score++;
+                correctCounter.innerText = score;
+                element.classList.add('correct');
+            } else {
+                errors++;
+                incorrectCounter.innerText = errors;
+                element.classList.add('incorrect');
+                // Mostrar la correcta
+                buttons[q.correct].classList.add('correct');
+            }
+
+            nextBtn.classList.remove('hidden');
+            if (currentQuestion === questions.length - 1) {
+                nextBtn.innerText = "Ver Resultados";
+            }
+        }
+
+        nextBtn.onclick = () => {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        };
+
+        function showResults() {
+            gameContainer.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            const percentage = Math.round((score / questions.length) * 100);
+            document.getElementById('final-score').innerText = `${percentage}%`;
+            document.getElementById('final-stats').innerText = 
+                `Has acertado ${score} preguntas y has fallado ${errors} de un total de ${questions.length}.`;
+        }
+
+        // Init
+        loadQuestion();
+    </script>
+</body>
+</html>
